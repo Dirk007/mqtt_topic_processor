@@ -13,7 +13,7 @@ use crate::{json_message::JsonMessage, state::StateValue};
 pub trait JsonTopicProcessor {
     /// Process the `input` for the topic this Processor was registered for and optionally return
     /// messages in reply.
-    async fn process<'t>(&'t self, input: Cow<'t, str>) -> Result<Option<Vec<JsonMessage<'t>>>>;
+    async fn process(&self, input: Cow<'static, str>) -> Result<Option<Vec<JsonMessage>>>;
 
     fn state(&self) -> &StateValue;
     fn set_state(&mut self, new_state: StateValue);
@@ -38,13 +38,13 @@ pub trait JsonTopicProcessor {
 /// A manager for different [JsonTopicProcessor] that have been registered via `register()`.
 /// Will select the appropriate processor for incoming messages on different topics.
 #[derive(Default)]
-pub struct TopicManager<'a> {
-    processors: HashMap<String, &'a mut dyn JsonTopicProcessor>,
+pub struct TopicManager {
+    processors: HashMap<String, Box<dyn JsonTopicProcessor>>,
 }
 
-impl<'a> TopicManager<'a> {
+impl TopicManager {
     /// Register ´processor` for topic `topic`.
-    pub fn register(&mut self, topic: impl AsRef<str>, processor: &'a mut impl JsonTopicProcessor) {
+    pub fn register(&mut self, topic: impl AsRef<str>, processor: Box<dyn JsonTopicProcessor>) {
         self.processors.insert(topic.as_ref().into(), processor);
     }
 
@@ -64,7 +64,7 @@ impl<'a> TopicManager<'a> {
 
     /// Chooses the appropriate processor for the given topic (if there is one) and returns it's
     /// processing-result.
-    pub async fn process(&self, message: JsonMessage<'a>) -> Result<Option<Vec<JsonMessage<'_>>>> {
+    pub async fn process(&self, message: JsonMessage) -> Result<Option<Vec<JsonMessage>>> {
         let topic: &str = message.topic.borrow();
         if let Some(proc) = self.processors.get(topic) {
             if proc.is_running() {

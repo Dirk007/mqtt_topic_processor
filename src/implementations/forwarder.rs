@@ -6,16 +6,16 @@ use async_trait::async_trait;
 use crate::{JsonMessage, JsonTopicProcessor, SimpleState, StateValue};
 
 /// Simply forwards a message on the registered input-topic to a given output-topic.
-pub struct Forwarder<'fwd> {
+pub struct Forwarder {
     state: SimpleState,
     /// The topic we forward incoming messages to
-    topic: &'fwd str,
+    topic: Cow<'static, str>,
 }
 
-impl<'fwd> Forwarder<'fwd> {
+impl Forwarder {
     /// Create a new [JsonTopicProcessor] which forwards all messages it receives
     /// to the given `topic` as the processing-result.
-    pub fn new(topic: &'fwd str) -> Self {
+    pub fn new(topic: Cow<'static, str>) -> Self {
         Self {
             state: SimpleState::default(),
             topic,
@@ -24,14 +24,14 @@ impl<'fwd> Forwarder<'fwd> {
 }
 
 #[async_trait]
-impl<'fwd> JsonTopicProcessor for Forwarder<'fwd> {
-    async fn process<'t>(&'t self, input: Cow<'t, str>) -> Result<Option<Vec<JsonMessage<'t>>>> {
+impl JsonTopicProcessor for Forwarder {
+    async fn process(&self, input: Cow<'static, str>) -> Result<Option<Vec<JsonMessage>>> {
         if !self.is_running() {
             return Ok(None);
         }
 
         let result = JsonMessage {
-            topic: Cow::Borrowed(&self.topic),
+            topic: self.topic.clone(),
             json: input,
         };
 

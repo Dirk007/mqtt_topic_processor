@@ -16,8 +16,8 @@ mod tests {
         use crate::{implementations::Forwarder, TopicManager};
 
         let mut manager = TopicManager::default();
-        let mut forwarder = Forwarder::new("other/topic");
-        manager.register("foo/bar", &mut forwarder);
+        let forwarder = Box::new(Forwarder::new("other/topic".into()));
+        manager.register("foo/bar", forwarder);
 
         // Unhandled Topic -> None
         assert_eq!(

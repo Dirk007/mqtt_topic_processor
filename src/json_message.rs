@@ -7,22 +7,22 @@ use serde::Deserialize;
 /// Topic and json are held as [Cow] to keep cloning around to a minimum / where really needed.
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq))]
-pub struct JsonMessage<'a> {
+pub struct JsonMessage {
     /// The topic
-    pub topic: Cow<'a, str>,
+    pub topic: Cow<'static, str>,
     /// The message-payload
-    pub json: Cow<'a, str>,
+    pub json: Cow<'static, str>,
 }
 
-impl<'a, T, P> From<(&'a T, &'a P)> for JsonMessage<'a>
+impl<T, P> From<(T, P)> for JsonMessage
 where
-    T: AsRef<str> + ?Sized,
-    P: AsRef<str> + ?Sized,
+    T: AsRef<str>,
+    P: AsRef<str>,
 {
-    fn from((topic, payload): (&'a T, &'a P)) -> Self {
+    fn from((topic, payload): (T, P)) -> Self {
         Self {
-            topic: Cow::Borrowed(topic.as_ref()),
-            json: Cow::Borrowed(payload.as_ref()),
+            topic: Cow::Owned(topic.as_ref().into()),
+            json: Cow::Owned(payload.as_ref().into()),
         }
     }
 }

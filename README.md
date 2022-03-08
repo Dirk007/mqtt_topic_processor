@@ -1,2 +1,2 @@
-# WIP a generelized processor for mqtt json-messages
+# WIP a generalized processor for mqtt json-messages
 ## More to come...
